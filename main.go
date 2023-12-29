@@ -1,25 +1,29 @@
 package main
 
 import (
-	"fmt"
 	"gee_web/gee"
-	"log"
 	"net/http"
 )
 
 func main() {
-	gee := gee.New()
-	gee.GET("/", indexHandle)
-	gee.POST("/hello", helloHandle)
-	log.Fatal(gee.Run(":9999"))
-}
+	r := gee.New()
+	r.GET("/", func(c *gee.Context) {
+		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
+	})
 
-func indexHandle(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "URL.path=%q\n", req.URL.Path)
-}
+	r.GET("/hello", func(c *gee.Context) {
+		// expect /hello?name=geektutu
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
+	})
 
-func helloHandle(w http.ResponseWriter, req *http.Request) {
-	for k, v := range req.Header {
-		fmt.Fprintf(w, "head[%q]=%q\n", k, v)
-	}
+	r.GET("/hello/:name", func(c *gee.Context) {
+		// expect /hello/geektutu
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Param("name"), c.Path)
+	})
+
+	r.GET("/assets/*filepath", func(c *gee.Context) {
+		c.JSON(http.StatusOK, gee.H{"filepath": c.Param("filepath")})
+	})
+
+	r.Run(":9999")
 }
